@@ -68,7 +68,7 @@ const active = ref('all')
 const BASE = import.meta.env.BASE_URL || '/' // e.g. '/' or '/your-subdir/'
 
 const features = [
-  { title: 'Unlimited Landing Pages',     mrp: '5000', img: `src/assets/solution/landing-page.png`, tag: 'Build',
+  { title: 'Unlimited Landing Pages',     mrp: '5000', img: `http://localhost:5173/src/assets/solution/landing-page.png`, tag: 'Build',
     desc:'Har campaign ke liye high-converting landing pages with tracking & A/B testing.' },
   { title: 'Unlimited Website Pages',     mrp: '5000', img: `src/assets/solution/domain.png`,       tag: 'Build',
     desc:'Multiple branded sites/pages—speed, SEO & security optimizations baked-in.' },
