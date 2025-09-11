@@ -16,11 +16,11 @@
       <!-- prev -->
       <button class="tc__nav tc__nav--prev" @click="prev" aria-label="Previous">
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          <path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
         </svg>
       </button>
 
-      <!-- cards -->
+      <!-- cards stack -->
       <ul class="tc__stack">
         <li
           v-for="(s, i) in slides"
@@ -47,7 +47,7 @@
       <!-- next -->
       <button class="tc__nav tc__nav--next" @click="next" aria-label="Next">
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path fill="currentColor" d="M8.59 16.59 10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+          <path fill="currentColor" d="M8.59 16.59 10 18l6-6-6-6-1.41 1.41L13.17 12z" />
         </svg>
       </button>
     </div>
@@ -56,7 +56,7 @@
     <div class="tc__dots">
       <button
         v-for="(s, i) in slides"
-        :key="'d'+i"
+        :key="'d' + i"
         :class="['tc__dot', { active: current === i }]"
         @click="go(i)"
         aria-label="Go to testimonial"
@@ -68,67 +68,94 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
-/* Dummy data – replace with yours */
+/* Dummy data – replace with your own */
 const slides = [
   {
     name: 'Hanna Lisem',
     role: 'Project Manager',
-    text: 'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
-    avatar: 'https://i.pravatar.cc/120?img=32',
+    text:
+      'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
+    avatar: 'https://i.pravatar.cc/120?img=32'
   },
   {
     name: 'Ronne Galle',
     role: 'Project Manager',
-    text: 'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
-    avatar: 'https://i.pravatar.cc/120?img=12',
+    text:
+      'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
+    avatar: 'https://i.pravatar.cc/120?img=12'
   },
   {
     name: 'Missy Limana',
     role: 'Engineer',
-    text: 'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
-    avatar: 'https://i.pravatar.cc/120?img=5',
+    text:
+      'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat.',
+    avatar: 'https://i.pravatar.cc/120?img=5'
   },
   {
     name: 'Arun Mehta',
     role: 'Coach',
-    text: 'Landing pages + calendar + payments = all-in-one. Conversions up, headache down.',
-    avatar: 'https://i.pravatar.cc/120?img=8',
+    text:
+      'Landing pages + calendar + payments = all-in-one. Conversions up, headache down.',
+    avatar: 'https://i.pravatar.cc/120?img=8'
   },
   {
     name: 'Isha Kulkarni',
     role: 'Educator',
-    text: 'Teen tools hata diye. Analytics clean hai, funnels reliable. Team ko bahut pasand aaya.',
-    avatar: 'https://i.pravatar.cc/120?img=48',
-  },
+    text:
+      'Teen tools hata diye. Analytics clean hai, funnels reliable. Team ko bahut pasand aaya.',
+    avatar: 'https://i.pravatar.cc/120?img=48'
+  }
 ]
 
-/* Carousel state */
-const current = ref(1) // center the second card initially (like screenshot)
+/* State */
+const current = ref(1) // start with second as center (adjust as you like)
 function next() { current.value = (current.value + 1) % slides.length }
 function prev() { current.value = (current.value - 1 + slides.length) % slides.length }
 function go(i)   { current.value = i }
 
-/* Offset helper (-1,0,1 relative to current) */
+/* Offset helper: -2/-1/0/1/2 around current */
 function delta(i) {
   const n = slides.length
   let d = i - current.value
-  if (d > n/2) d -= n
-  if (d < -n/2) d += n
-  // clamp to -1..1 for the "three card" look
+  if (d > n / 2) d -= n
+  if (d < -n / 2) d += n
   if (d > 1) d = 2
   if (d < -1) d = -2
   return d
 }
 
-/* Card transform per position */
-const SHIFT = 380 // px horizontal shift between cards (desktop)
+/* ---------- responsive SHIFT ---------- */
+const vw = ref(typeof window !== 'undefined' ? window.innerWidth : 1200)
+const onResize = () => (vw.value = window.innerWidth)
+
+onMounted(() => window.addEventListener('resize', onResize))
+onBeforeUnmount(() => window.removeEventListener('resize', onResize))
+
+const isMobile = computed(() => vw.value <= 720)
+const isTablet = computed(() => vw.value > 720 && vw.value <= 980)
+const SHIFT = computed(() => (isMobile.value ? 0 : isTablet.value ? 260 : 380))
+/* -------------------------------------- */
+
+/* transform per-position */
 function styleFor(i) {
   const d = delta(i)
-  let x = 0, s = 1, o = 1, blur = 0, z = 3
 
-  if (d === -1) { x = -SHIFT; s = 0.9;  o = 0.45; blur = 1.2; z = 1 }
-  if (d ===  1) { x =  SHIFT; s = 0.9;  o = 0.6;  blur = 0.8; z = 2 }
-  if (d !== 0 && Math.abs(d) > 1) { o = 0; z = 0 }
+  // Phone layout: show only center, hide sides
+  if (isMobile.value) {
+    return {
+      transform: 'translate(-50%, -50%)',
+      opacity: d === 0 ? '1' : '0',
+      filter: 'none',
+      zIndex: d === 0 ? '3' : '0',
+      pointerEvents: d === 0 ? 'auto' : 'none'
+    }
+  }
+
+  // Tablet / Desktop 3-card layout
+  let x = 0, s = 1, o = 1, blur = 0, z = 3
+  if (d === -1) { x = -SHIFT.value; s = 0.9; o = 0.45; blur = 1.2; z = 1 }
+  if (d ===  1) { x =  SHIFT.value; s = 0.9; o = 0.60; blur = 0.8; z = 2 }
+  if (Math.abs(d) > 1) { o = 0; z = 0 }
 
   return {
     transform: `translate(calc(-50% + ${x}px), -50%) scale(${s})`,
@@ -139,16 +166,17 @@ function styleFor(i) {
   }
 }
 
-/* Autoplay with pause on hover / off-screen */
+/* autoplay with pause on hover & off-screen */
 let timer = 0, io
 const stage = ref(null)
-function play() { if (!timer) timer = setInterval(next, 4000) }
+function play()  { if (!timer) timer = setInterval(next, 4000) }
 function pause() { clearInterval(timer); timer = 0 }
 
 onMounted(() => {
-  io = new IntersectionObserver((entries) => {
-    entries[0].isIntersecting ? play() : pause()
-  }, { threshold: 0.25 })
+  io = new IntersectionObserver(
+    (entries) => (entries[0].isIntersecting ? play() : pause()),
+    { threshold: 0.25 }
+  )
   io.observe(stage.value)
 })
 onBeforeUnmount(() => { pause(); io && io.disconnect() })
@@ -180,6 +208,7 @@ onBeforeUnmount(() => { pause(); io && io.disconnect() })
   margin: 18px auto 0;
   max-width: 1100px;
   height: 320px;
+  overflow: visible; /* show sides on desktop/tablet */
 }
 .tc__stack{ position: relative; height: 100%; }
 .tc__wrap{
@@ -189,7 +218,7 @@ onBeforeUnmount(() => { pause(); io && io.disconnect() })
   will-change: transform, opacity, filter;
 }
 
-/* Card design */
+/* Card */
 .card{
   width: 360px;
   border-radius: var(--radius);
@@ -213,7 +242,7 @@ onBeforeUnmount(() => { pause(); io && io.disconnect() })
   line-height: 1.6;
 }
 
-/* Nav arrows */
+/* Arrows */
 .tc__nav{
   position:absolute; top:50%; transform:translateY(-50%);
   width:38px; height:38px; border-radius:50%;
@@ -245,7 +274,10 @@ onBeforeUnmount(() => { pause(); io && io.disconnect() })
   .card{ width: 320px; }
 }
 @media (max-width: 720px){
-  .tc__stage{ height: 360px; }
-  .card{ width: 92vw; max-width: 420px; }
+  .tc__stage{ height: 420px; overflow: hidden; } /* hide off-screen on phones */
+  .card{ width: 90vw; max-width: 420px; }
+  .tc__nav{ width:34px; height:34px; }
+  .tc__nav--prev{ left: 6px; }
+  .tc__nav--next{ right: 6px; }
 }
 </style>
